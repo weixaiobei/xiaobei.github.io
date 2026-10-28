@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>生日快乐</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "PingFang SC", "Microsoft Yahei", sans-serif;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    background: linear-gradient(135deg, #ffd6e0 0%, #ffe6cc 50%, #ffb8cc 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 背景文字居中：独立 translate 属性 */
+  .heart-bg-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+    font-size: clamp(80px, 18vw, 220px);
+    font-weight: bold;
+    color: #e6324b22;
+    font-family: "KaiTi", "楷体", serif;
+    pointer-events: none;
+    z-index: 0;
+    white-space: nowrap;
+  }
+
+  .heart-bg-en {
+    position: absolute;
+    top: 58%;
+    left: 50%;
+    translate: -50% -50%;
+    font-size: clamp(20px, 4vw, 48px);
+    color: #e6324b33;
+    font-style: italic;
+    pointer-events: none;
+    z-index: 0;
+    white-space: nowrap;
+  }
+
+  .heart-wrap {
+    position: relative;
+    width: min(92vw, 760px);
+    height: min(92vw, 760px);
+    z-index: 1;
+  }
+
+  /* ========== 卡片动画规范保持不变 ========== */
+  .wish-card {
+    position: absolute;
+    width: 108px;
+    height: 68px;
+    border-radius: 6px;
+    background: #fff;
+    padding: 6px 8px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #333;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: opacity 0.45s ease, transform 0.45s ease;
+    will-change: opacity, transform;
+    user-select: none;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  }
+
+  .wish-card.show {
+    opacity: 1;
+    transform: rotate(var(--rotate)) scale(1);
+  }
+
+  .wish-card:hover {
+    z-index: 200 !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  }
+
+  .card-close {
+    position: absolute;
+    top: 3px;
+    right: 6px;
+    font-size: 13px;
+    color: #555;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  /* 最终祝福弹窗 */
+  .tip-box {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+    transform: scale(0.9);
+    background: #fff7f9;
+    padding: 28px 44px;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.45s ease, transform 0.45s ease;
+    z-index: 120;
+    pointer-events: none;
+  }
+
+  .tip-box.show {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .tip-box h2 {
+    color: #c0203e;
+    font-size: 22px;
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+  }
+
+  .tip-box p {
+    color: #555;
+    font-size: 14px;
+  }
+
+  /* ========== 祝福详情弹层 ========== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(70, 22, 40, 0.30);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 999;
+  }
+
+  .modal-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .modal-card {
+    background: #ffffff;
+    border-radius: 18px;
+    max-width: min(80vw, 420px);
+    padding: 42px 34px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    position: relative;
+    transform: scale(0.86);
+    transition: transform 0.38s cubic-bezier(.2, 1.5, .4, 1);
+  }
+
+  .modal-overlay.show .modal-card {
+    transform: scale(1);
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    font-size: 22px;
+    color: #cccccc;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .modal-text {
+    color: #c0203e;
+    font-size: clamp(16px, 4.4vw, 20px);
+    line-height: 1.8;
+    letter-spacing: 1px;
+    font-family: "楷体", "PingFang SC", serif;
+    text-align: center;
+  }
+
+  @media screen and (max-width: 600px) {
+    .wish-card {
+      width: 82px;
+      height: 52px;
+      font-size: 10px;
+    }
+
+    .tip-box {
+      padding: 20px 30px;
+    }
+
+    .tip-box h2 {
+      font-size: 18px;
+    }
+
+    .tip-box p {
+      font-size: 12px;
+    }
+  }
+</style>
+</head>
+
+<body>
+  <div class="heart-bg-text">生日快乐</div>
+  <div class="heart-bg-en">Happy Birthday</div>
+
+  <div class="heart-wrap" id="heartWrap"></div>
+
+  <div class="tip-box" id="tipBox">
+    <h2>生日快乐 ❤</h2>
+    <p>愿你新的一岁，继续闪闪发光</p>
+  </div>
+
+  <!-- 祝福详情弹层 -->
+  <div class="modal-overlay" id="wishModal">
+    <div class="modal-card">
+      <span class="modal-close" id="wishModalClose">×</span>
+      <div class="modal-text" id="wishModalText"></div>
+    </div>
+  </div>
+
+<script>
+  // 99条完全不重复的生日祝福语，无 undefined
+  const wishList = [
+    "希望你永远做自己",
+    "平安喜乐，万事顺意",
+    "岁岁常欢愉，年年皆胜意",
+    "新岁无忧，闪闪发光",
+    "所愿皆所得，所行皆坦途",
+    "日子滚烫，可爱又明亮",
+    "保持热爱，奔赴山海",
+    "永远被温柔以待",
+    "快乐不止今天",
+    "眼里有星光，心中有暖阳",
+    "岁岁无忧，得偿所愿",
+    "平安顺遂，好运常在",
+    "永远热烈，永远自由",
+    "慢慢长大，好好生活",
+    "好运与你撞满怀",
+    "三餐四季，温柔有趣",
+    "永远是闪闪发光的自己",
+    "所有美好向你奔赴而来",
+    "新一岁，继续发光",
+    "不负时光，不负自己",
+    "一生被爱，勇敢自在",
+    "愿好运常驻身旁",
+    "笑里全是坦荡，未来闪闪发光",
+    "年年有惊喜，岁岁有欢喜",
+    "平安无疾，喜乐如常",
+    "前路浩浩荡荡，万事尽可期待",
+    "愿所有愿望都开花",
+    "自在如风，万事顺心",
+    "生活明朗，万物可爱",
+    "奔赴下一场山海",
+    "温柔且坚定，知足且上进",
+    "保持热爱，永不落幕",
+    "岁岁平安，年年欢喜",
+    "好运接踵而至",
+    "被世界温柔偏爱",
+    "不慌不忙，慢慢成长",
+    "眼里有光，心中有爱",
+    "所有幸运如约而至",
+    "岁岁年年，万喜万般宜",
+    "永远热烈自由",
+    "所得皆所期，所失亦无碍",
+    "日子清新，万事顺心",
+    "永远保有童心",
+    "前路光明，万事可期",
+    "快乐常驻心底",
+    "奔赴热爱，永不妥协",
+    "每一天都闪闪发光",
+    "好运源源不断",
+    "自在欢喜，无忧无虑",
+    "永远做最耀眼的自己",
+    "与美好不期而遇",
+    "万事顺心，多喜乐",
+    "风遇山止，船到岸停",
+    "新岁，新光，新希望",
+    "平安伴朝夕，欢喜藏心底",
+    "奔赴属于自己的浪漫",
+    "永远积极向上",
+    "好事接踵而来",
+    "心有繁花，一路芳华",
+    "不负热爱，自在生长",
+    "所有惊喜奔你而来",
+    "保持浪漫，永远热忱",
+    "日子温柔，万事可期",
+    "向阳生长，自在明亮",
+    "平安无忧，喜乐长久",
+    "所愿皆成真，所盼皆可期",
+    "永远热烈滚烫",
+    "生活温暖顺心，其他别无他求",
+    "眼里星河璀璨，日子温柔闪光",
+    "慢慢变好，是给自己最好礼物",
+    "岁岁常欢喜，事事皆圆满",
+    "以欢喜之心，慢度日常",
+    "一生温暖纯良，不舍爱与自由",
+    "追风赶月，莫停留",
+    "平安，开心，暴富，被爱",
+    "永远自在，永远鲜活",
+    "与所有美好撞个满怀",
+    "前路繁花似锦，万事顺意",
+    "保持可爱，奔赴热爱",
+    "万事胜意，岁岁安康",
+    "新一岁，自在随心",
+    "心向阳光，永远明亮",
+    "所有美好如期而至",
+    "岁岁平安，日日欢喜",
+    "自在生长，闪闪发光",
+    "愿你永远被爱包围",
+    "烟火向星辰，所愿皆成真",
+    "一岁一礼，一寸欢喜",
+    "喜乐有分享，共度日月长",
+    "前路有光，身后有爱",
+    "日子常新，未来不远",
+    "满心欢喜，万事胜意",
+    "良辰吉日，岁岁年年",
+    "人间值得，未来可期",
+    "顺遂无虞，皆得所愿",
+    "喜乐长安，一生无忧",
+    "星光满载，初心不改",
+    "往后余生，皆是美好",
+    "愿你新的一岁，眼里有光，心中有爱，天天都有小惊喜"
+  ];
+
+  const cardColors = [
+    "#e8f4ff", "#fff0f6", "#fff8dd", "#e6fff4", "#f4eaff",
+    "#ffe8e8", "#eaf8ff", "#f0fff0", "#fff0ea"
+  ];
+
+  const heartWrap = document.getElementById("heartWrap");
+  const tipBox = document.getElementById("tipBox");
+
+  // 弹层元素
+  const wishModal = document.getElementById("wishModal");
+  const wishModalText = document.getElementById("wishModalText");
+  const wishModalClose = document.getElementById("wishModalClose");
+
+  // 动画参数
+  const FIRST_DELAY = 250;
+  const CARD_INTERVAL = 28;
+
+  // 生成心形坐标
+  function createHeartPoints(count = 99) {
+    const points = [];
+    for (let i = 0; i < count; i++) {
+      const t = (i / count) * Math.PI * 2;
+      const x = 16 * Math.pow(Math.sin(t), 3);
+      const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+      points.push({ x: x * 15, y: -y * 15 });
+    }
+    return points;
+  }
+
+  const heartPoints = createHeartPoints(99);
+
+  // 渲染99张卡片
+  heartPoints.forEach((point, index) => {
+    const card = document.createElement("div");
+    card.className = "wish-card";
+    card.style.background = cardColors[index % cardColors.length];
+
+    // 静态定位，不参与过渡动画
+    card.style.left = `calc(50% + ${point.x}px - 54px)`;
+    card.style.top = `calc(50% + ${point.y}px - 34px)`;
+    card.style.zIndex = index + 10;
+
+    // ±8° 随机旋转
+    const rotateDeg = (Math.random() - 0.5) * 16 + "deg";
+    card.style.setProperty("--rotate", rotateDeg);
+
+    const closeTag = document.createElement("span");
+    closeTag.className = "card-close";
+    closeTag.innerText = "×";
+
+    const text = document.createElement("span");
+    text.textContent = wishList[index];
+
+    card.appendChild(closeTag);
+    card.appendChild(text);
+    heartWrap.appendChild(card);
+
+    // 错峰启动入场动画
+    setTimeout(() => {
+      card.classList.add("show");
+    }, FIRST_DELAY + index * CARD_INTERVAL);
+
+    // 点击卡片打开详情弹层
+    card.addEventListener("click", () => {
+      openWishModal(wishList[index]);
+    });
+  });
+
+  // ========== 弹层交互逻辑 ==========
+  function openWishModal(text) {
+    wishModalText.textContent = text;
+    wishModal.classList.add("show");
+  }
+
+  function closeWishModal() {
+    wishModal.classList.remove("show");
+  }
+
+  // 关闭方式1：点击右上角 ×
+  wishModalClose.addEventListener("click", closeWishModal);
+
+  // 关闭方式2：点击遮罩任意处
+  wishModal.addEventListener("click", (e) => {
+    if (e.target === wishModal) {
+      closeWishModal();
+    }
+  });
+
+  // 关闭方式3：按 Esc 键
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && wishModal.classList.contains("show")) {
+      closeWishModal();
+    }
+  });
+
+  // 最终祝福弹窗出现
+  setTimeout(() => {
+    tipBox.classList.add("show");
+  }, FIRST_DELAY + 99 * CARD_INTERVAL + 450 + 300);
+</script>
+</body>
+</html>
+<!-- （注：内容由AI生成） -->
